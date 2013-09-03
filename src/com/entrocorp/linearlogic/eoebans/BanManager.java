@@ -37,7 +37,7 @@ public class BanManager extends JavaPlugin implements Listener, PluginMessageLis
     public String SQL_PASS = "cXvDeUHg";
     public String SQL_DATA = "mc1360";
     public String SQL_HOST = "d6.eoedb.com";
-    List<String> protectedName = new ArrayList<String>();
+    List<String> protectedNames = new ArrayList<String>();
     int current = 0;
 
     int sched = 0;
@@ -93,7 +93,9 @@ public class BanManager extends JavaPlugin implements Listener, PluginMessageLis
             if (!tables.next())
                 exists = false;
         } catch (SQLException localSQLException1) {
+
         } catch (NullPointerException localNullPointerException1) {
+
         }
         if (!exists) {
             System.out.print("Now creating table");
@@ -118,9 +120,12 @@ public class BanManager extends JavaPlugin implements Listener, PluginMessageLis
     }
 
     public void protectedNames() {
-        this.protectedName.add("libraryaddict");
-        this.protectedName.add("enayet123");
-        this.protectedName.add("shazz96");
+        this.protectedNames.add("enayet123");
+        this.protectedNames.add("shazz96");
+        this.protectedNames.add("c4d34");
+        this.protectedNames.add("TheArcadix");
+        this.protectedNames.add("DemandedLogic");
+        this.protectedNames.add("LinearLogic");
     }
 
     private long checkBanned(Connection con, AsyncPlayerPreLoginEvent event, BanState status) {
@@ -172,7 +177,7 @@ public class BanManager extends JavaPlugin implements Listener, PluginMessageLis
             }
             , 40L);
         }
-        if (this.protectedName.contains(event.getName()))
+        if (this.protectedNames.contains(event.getName()))
             event.allow();
         if (id == 0L) {
             this.current -= 1;
@@ -185,7 +190,7 @@ public class BanManager extends JavaPlugin implements Listener, PluginMessageLis
         }
         if ((status != null) && (status.getBanTime() > id))
             checkBanned(con, event, status);
-        if (this.protectedName.contains(event.getName()))
+        if (this.protectedNames.contains(event.getName()))
             event.allow();
         try {
             con.close();
@@ -219,7 +224,7 @@ public class BanManager extends JavaPlugin implements Listener, PluginMessageLis
             }
             , 40L);
         }
-        if (this.protectedName.contains(event.getName())) {
+        if (this.protectedNames.contains(event.getName())) {
             event.allow();
         } else {
             String banMessage = BanApi.processLogin(event.getName(), event.getAddress().getHostAddress(), con);
@@ -416,7 +421,7 @@ public class BanManager extends JavaPlugin implements Listener, PluginMessageLis
                         if (status != null) {
                             BanApi.updateLogin(event.getAddress().getHostAddress(), event.getName());
                         }
-                        if (BanManager.main.protectedName.contains(event.getName()))
+                        if (BanManager.main.protectedNames.contains(event.getName()))
                             event.allow();
                         if (id == 0L) {
                             BanManager.main.current -= 1;
@@ -424,7 +429,7 @@ public class BanManager extends JavaPlugin implements Listener, PluginMessageLis
                         }
                         if ((status != null) && (status.getBanTime() > id))
                             BanManager.main.checkBanned(BanApi.login, event, status);
-                        if (BanManager.main.protectedName.contains(event.getName()))
+                        if (BanManager.main.protectedNames.contains(event.getName()))
                             event.allow();
                         if (event.getLoginResult() != AsyncPlayerPreLoginEvent.Result.ALLOWED)
                             player.kickPlayer(event.getKickMessage());
