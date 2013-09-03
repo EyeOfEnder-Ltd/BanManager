@@ -33,10 +33,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 
 public class BanManager extends JavaPlugin implements Listener, PluginMessageListener {
-    public String SQL_USER = "root";
-    public String SQL_PASS = "cXvDeUHg";
-    public String SQL_DATA = "mc1360";
-    public String SQL_HOST = "d6.eoedb.com";
+    public String SQL_USER;
+    public String SQL_PASS;
+    public String SQL_DATA;
+    public String SQL_HOST;
     List<String> protectedNames = new ArrayList<String>();
     int current = 0;
 
@@ -46,6 +46,11 @@ public class BanManager extends JavaPlugin implements Listener, PluginMessageLis
 
     public void onEnable() {
         main = this;
+        saveDefaultConfig();
+        SQL_USER = getConfig().getString("sql.user");
+        SQL_PASS = getConfig().getString("sql.pass");
+        SQL_DATA = getConfig().getString("sql.data");
+        SQL_HOST = getConfig().getString("sql.host");
         PluginManager manager = getServer().getPluginManager();
         manager.registerEvents(this, this);
         manager.registerEvents(new PlayerListener(this), this);
