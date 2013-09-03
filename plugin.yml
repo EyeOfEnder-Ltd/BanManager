@@ -1,0 +1,23 @@
+name: BanManager
+main: com.entrocorp.linearlogic.eoebans.BanManager
+authors: [LinearLogic, libraryaddict]
+version: 1.2
+commands:
+    ban:
+        description: Bans (or updates the pre-existing ban of) a player for a specified amount of time
+    unban:
+        description: Unbans a player
+    baninfo:
+        description: Retrieves ban details for a player
+    baninfologin:
+        description: Retrieves ban details for a player from his or her last login
+    permban:
+        description: Permanently bans a player such that only ops can later unban said player
+    banip:
+        description: Blacklists a player's IP address
+    permbanip:
+        description: Permanently blacklists a player's IP address such that only ops can later remove said IP from the blacklist
+permissions:
+    banmanager.ban:
+        description: Permission to run all ban commands that do not require explicit op access
+        default: op
