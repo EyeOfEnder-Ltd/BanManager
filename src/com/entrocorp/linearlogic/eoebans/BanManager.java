@@ -48,6 +48,7 @@ public class BanManager extends JavaPlugin implements Listener, PluginMessageLis
         main = this;
         PluginManager manager = getServer().getPluginManager();
         manager.registerEvents(this, this);
+        manager.registerEvents(new PlayerListener(this), this);
         BanApi.admin = SQLconnect();
         BanApi.login = SQLconnect();
         protectedNames();
