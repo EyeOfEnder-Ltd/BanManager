@@ -173,9 +173,9 @@ public class BanManager extends JavaPlugin implements Listener {
                         sender.sendMessage(ChatColor.LIGHT_PURPLE + "Player doesn't exist");
                     else
                         sender.sendMessage(ChatColor.LIGHT_PURPLE + "Couldn't find player. But found it under 'last login'");
-                }
-                if (state != null)
+                } else {
                     BanApi.sendState(state, sender);
+                }
             } else if (sender.hasPermission("banmanager.ban")) {
                 sender.sendMessage(ChatColor.LIGHT_PURPLE + "You need to use a playername");
             } else {
@@ -189,9 +189,9 @@ public class BanManager extends JavaPlugin implements Listener {
                 if (state == null) {
                     sender.sendMessage(ChatColor.LIGHT_PURPLE + "Login doesn't exist");
                     return true;
-                }
-                if (state != null)
+                } else {
                     BanApi.sendState(state, sender);
+                }
             } else if (sender.hasPermission("banmanager.ban")) {
                 sender.sendMessage(ChatColor.LIGHT_PURPLE + "You need to use a playername");
             } else {
@@ -207,13 +207,11 @@ public class BanManager extends JavaPlugin implements Listener {
                         sender.sendMessage(ChatColor.LIGHT_PURPLE + "Player doesn't exist");
                         return true;
                     }
-                    if (((state.isPermBanned()) || (state.isBanned())) && ((state.getBanTime() == 0L) ||
-                            (state.getBanTime() - System.currentTimeMillis() / 1000L * 2L > 0L)) && (!sender.isOp())) {
+                    if ((state.isPermBanned() || state.isBanned()) && (state.getBanTime() == 0L ||
+                            state.getBanTime() - System.currentTimeMillis() / 1000L * 2L > 0L) && !sender.isOp()) {
                         sender.sendMessage(ChatColor.LIGHT_PURPLE + "You do not have the power to modify this ban");
                         return true;
                     }
-                    if ((state.isBanned()) || (state.isPermBanned()))
-                        BanApi.sendState(state, sender);
                     BanApi.ban(StringUtils.join(args, " "), sender, false);
                 } else {
                     sender.sendMessage(ChatColor.RED + "You need to define a name!");
@@ -228,13 +226,12 @@ public class BanManager extends JavaPlugin implements Listener {
                         sender.sendMessage(ChatColor.LIGHT_PURPLE + "Player doesn't exist");
                         return true;
                     }
-                    if (((state.isPermBanned()) || (state.isBanned())) && ((state.getBanTime() == 0L) ||
-                            (state.getBanTime() - System.currentTimeMillis() / 1000L * 2L > 0L)) && (!sender.isOp())) {
+                    if ((state.isPermBanned() || state.isBanned()) && (state.getBanTime() == 0L ||
+                            state.getBanTime() - System.currentTimeMillis() / 1000L * 2L > 0L) && !sender.isOp()) {
                         sender.sendMessage(ChatColor.LIGHT_PURPLE + "You do not have the power to modify this ban");
                         return true;
                     }
-                    if ((state.isBanned()) || (state.isPermBanned())) {
-                        BanApi.sendState(state, sender);
+                    if (state.isBanned() || state.isPermBanned()) {
                         BanApi.unban(state.getVictim());
                         sender.sendMessage(ChatColor.LIGHT_PURPLE + state.getVictim() + " has been unbanned");
                     } else {

@@ -98,8 +98,6 @@ public class BanApi {
             }
             state = banInfo(p.getName());
         }
-        if ((state.isBanned()) || (state.isPermBanned()))
-            sendState(state, sender);
         ban(state.getVictim(), sender.getName(), reason, time);
         if (!perm) {
             sender.sendMessage(ChatColor.LIGHT_PURPLE + "They have been banned");
@@ -118,7 +116,7 @@ public class BanApi {
                 if (player.getAddress().getAddress().getHostAddress().equalsIgnoreCase(args[0]))
                     player.kickPlayer(StringUtils.join(messages, "\n"));
         }
-        sendState(banInfo(state.getVictim(), admin), sender);
+        banInfo(state.getVictim(), admin);
     }
 
     static String getTime(long number) {
