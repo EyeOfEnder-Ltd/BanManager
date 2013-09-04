@@ -34,7 +34,7 @@ public class BungeeListener implements PluginMessageListener {
                         }
                         if (!(status.isBanned() || status.isPermBanned()))
                             return;
-                        if (!status.isPermBanned() && status.getBanTime() <= System.currentTimeMillis() / 1000L) {
+                        if (status.getBanTime() != 0 && status.getBanTime() <= System.currentTimeMillis() / 1000L) {
                             BanApi.unban(status.getVictim(), BanApi.login);
                             return;
                         }
