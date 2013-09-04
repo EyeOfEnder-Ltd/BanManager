@@ -1,12 +1,9 @@
 package com.entrocorp.linearlogic.eoebans;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -30,9 +27,8 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.plugin.messaging.PluginMessageListener;
 
-public class BanManager extends JavaPlugin implements Listener, PluginMessageListener {
+public class BanManager extends JavaPlugin implements Listener {
     public String SQL_USER;
     public String SQL_PASS;
     public String SQL_DATA;
@@ -70,8 +66,8 @@ public class BanManager extends JavaPlugin implements Listener, PluginMessageLis
             }
         }
         , 0L, 120L);
-        Bukkit.getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
-        Bukkit.getMessenger().registerIncomingPluginChannel(this, "BungeeCord", this);
+        getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+        getServer().getMessenger().registerIncomingPluginChannel(this, "BungeeCord", new BungeeListener(this));
     }
 
     public boolean isBungee(InetAddress address) {
@@ -80,15 +76,15 @@ public class BanManager extends JavaPlugin implements Listener, PluginMessageLis
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
-        Player p = event.getPlayer();
+        final Player p = event.getPlayer();
         if (p.hasPermission("chat.bypass"))
             this.perms.add(p.getName());
-        ByteArrayOutputStream b = new ByteArrayOutputStream();
+        final ByteArrayOutputStream b = new ByteArrayOutputStream();
         DataOutputStream out = new DataOutputStream(b);
         try {
             out.writeUTF("IP");
         } catch (IOException localIOException) { }
-        p.sendPluginMessage(BanManager.main, "BungeeCord", b.toByteArray());
+        p.sendPluginMessage(main, "BungeeCord", b.toByteArray());
         try {
             b.close();
             out.close();
@@ -149,7 +145,7 @@ public class BanManager extends JavaPlugin implements Listener, PluginMessageLis
         this.protectedNames.add("LinearLogic");
     }
 
-    private long checkBanned(Connection con, AsyncPlayerPreLoginEvent event, BanState status) {
+    long checkBanned(Connection con, AsyncPlayerPreLoginEvent event, BanState status) {
         if ((!status.isBanned()) && (!status.isPermBanned()))
             return -1L;
         if ((status.getBanTime() != 0L) && (status.getBanTime() < System.currentTimeMillis() / 1000L)) {
@@ -220,9 +216,7 @@ public class BanManager extends JavaPlugin implements Listener, PluginMessageLis
         }
     }
 
-    @EventHandler
     public void playerLogin(final AsyncPlayerPreLoginEvent event) {
-        System.out.println("0");
         if (BanApi.login == null) {
             return;
         }
@@ -247,7 +241,6 @@ public class BanManager extends JavaPlugin implements Listener, PluginMessageLis
         if (BanManager.main.protectedNames.contains(event.getName())) {
             event.allow();
         } else {
-            System.out.println("1");
             String banMessage = BanApi.processLogin(event.getName(), event.getAddress().getHostAddress(), con);
             if (banMessage != null)
                 event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, banMessage);
@@ -414,52 +407,5 @@ public class BanManager extends JavaPlugin implements Listener, PluginMessageLis
             return true;
         }
         return true;
-    }
-
-    public void onPluginMessageReceived(String channel, final Player player, byte[] message) {
-        DataInputStream in = new DataInputStream(new ByteArrayInputStream(message));
-        try {
-            if (in.readUTF().equals("IP")) {
-                final String host = in.readUTF();
-                final String name = player.getName();
-                Bukkit.getScheduler().runTaskAsynchronously(this, new Runnable() {
-                    public void run() {
-                        AsyncPlayerPreLoginEvent event = null;
-                        try {
-                            event = new AsyncPlayerPreLoginEvent(name, InetAddress.getByName(host));
-                        } catch (UnknownHostException e) {
-                            e.printStackTrace();
-                            return;
-                        }
-                        long id = -1L;
-                        BanState status = BanApi.banInfo(name, BanApi.login);
-                        if (status == null)
-                            BanApi.addPlayer(name, BanApi.login);
-                        else
-                            id = BanManager.main.checkBanned(BanApi.login, event, status);
-                        BanApi.updateLogin(event.getName(), event.getAddress().getHostAddress());
-                        status = BanApi.banInfo(event.getAddress().getHostAddress(), BanApi.login);
-                        if (status != null) {
-                            BanApi.updateLogin(event.getAddress().getHostAddress(), event.getName());
-                        }
-                        if (BanManager.main.protectedNames.contains(event.getName()))
-                            event.allow();
-                        if (id == 0L) {
-                            BanManager.main.current -= 1;
-                            return;
-                        }
-                        if ((status != null) && (status.getBanTime() > id))
-                            BanManager.main.checkBanned(BanApi.login, event, status);
-                        if (BanManager.main.protectedNames.contains(event.getName()))
-                            event.allow();
-                        if (event.getLoginResult() != AsyncPlayerPreLoginEvent.Result.ALLOWED)
-                            player.kickPlayer(event.getKickMessage());
-                    }
-                });
-            }
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }
