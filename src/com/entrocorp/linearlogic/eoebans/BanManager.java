@@ -163,6 +163,7 @@ public class BanManager extends JavaPlugin implements Listener {
         return null;
     }
 
+    @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
         if (cmd.getName().equalsIgnoreCase("baninfo")) {
             if ((sender.hasPermission("banmanager.ban")) && (args.length > 0)) {
@@ -181,25 +182,7 @@ public class BanManager extends JavaPlugin implements Listener {
             } else {
                 sender.sendMessage(ChatColor.LIGHT_PURPLE + "You are not op!");
             }
-            return true;
-        }
-        if (cmd.getName().equalsIgnoreCase("baninfologin")) {
-            if ((sender.hasPermission("banmanager.ban")) && (args.length > 0)) {
-                BanState state = BanApi.banInfoFromLogin(args[0]);
-                if (state == null) {
-                    sender.sendMessage(ChatColor.LIGHT_PURPLE + "Login doesn't exist");
-                    return true;
-                } else {
-                    BanApi.sendState(state, sender);
-                }
-            } else if (sender.hasPermission("banmanager.ban")) {
-                sender.sendMessage(ChatColor.LIGHT_PURPLE + "You need to use a playername");
-            } else {
-                sender.sendMessage(ChatColor.LIGHT_PURPLE + "You are not op!");
-            }
-            return true;
-        }
-        if (cmd.getName().equalsIgnoreCase("ban")) {
+        } else if (cmd.getName().equalsIgnoreCase("ban")) {
             if (sender.hasPermission("banmanager.ban")) {
                 if (args.length > 0) {
                     BanState state = BanApi.banInfo(args[0]);
@@ -216,7 +199,6 @@ public class BanManager extends JavaPlugin implements Listener {
                 } else {
                     sender.sendMessage(ChatColor.RED + "You need to define a name!");
                 }
-                return true;
             }
         } else if (cmd.getName().equalsIgnoreCase("unban")) {
             if (sender.hasPermission("banmanager.ban")) {
@@ -240,18 +222,6 @@ public class BanManager extends JavaPlugin implements Listener {
                 } else {
                     sender.sendMessage(ChatColor.RED + "You need to define a player name!");
                 }
-
-                return true;
-            }
-        } else if (cmd.getName().equalsIgnoreCase("permban")) {
-            if (sender.isOp()) {
-                if (args.length > 0)
-                    BanApi.ban(StringUtils.join(args, " "), sender, true);
-                else
-                    sender.sendMessage(ChatColor.RED + "You need to define a player name!");
-            } else {
-                sender.sendMessage(ChatColor.RED + "You do not have permission to use this command!");
-                return true;
             }
         }
         return true;
