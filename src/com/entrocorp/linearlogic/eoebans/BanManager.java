@@ -83,7 +83,7 @@ public class BanManager extends JavaPlugin implements Listener {
             public void run() {
                 p.sendPluginMessage(main, "BungeeCord", b.toByteArray());
             }
-        }, 20L);
+        }, 5L);
         try {
             b.close();
             out.close();
