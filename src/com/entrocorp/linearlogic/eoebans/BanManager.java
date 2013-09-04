@@ -56,6 +56,8 @@ public class BanManager extends JavaPlugin implements Listener, PluginMessageLis
         manager.registerEvents(new PlayerListener(this), this);
         BanApi.admin = SQLconnect();
         BanApi.login = SQLconnect();
+        if (BanApi.admin != null && BanApi.login != null)
+            getLogger().info("Successfully connected to SQL backend.");
         protectedNames();
         checkTableExists(BanApi.admin);
         sched = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
@@ -81,6 +83,19 @@ public class BanManager extends JavaPlugin implements Listener, PluginMessageLis
         Player p = event.getPlayer();
         if (p.hasPermission("chat.bypass"))
             this.perms.add(p.getName());
+        ByteArrayOutputStream b = new ByteArrayOutputStream();
+        DataOutputStream out = new DataOutputStream(b);
+        try {
+            out.writeUTF("IP");
+        } catch (IOException localIOException) { }
+        p.sendPluginMessage(BanManager.main, "BungeeCord", b.toByteArray());
+        try {
+            b.close();
+            out.close();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
     @EventHandler
@@ -103,12 +118,13 @@ public class BanManager extends JavaPlugin implements Listener, PluginMessageLis
 
         }
         if (!exists) {
-            System.out.print("Now creating table");
+            getLogger().info("Could not find PlayerBans table. Creating now...");
             String sta = "CREATE TABLE PlayerBans (ID int(10) unsigned NOT NULL AUTO_INCREMENT, Name varchar(20) NOT NULL, Banned varchar(20) NOT NULL, BannedBy varchar(20) NOT NULL, BanTime int(20) NOT NULL, Reason varchar(200), Perm varchar(20) NOT NULL, LastLogin varchar(200) NOT NULL, PRIMARY KEY (`ID`))";
             try {
                 Statement st = con.createStatement();
                 st.executeUpdate(sta);
                 st.close();
+                return;
             } catch (SQLException ex) {
                 System.err.println("[BanManager] Error with following query: " + sta);
                 System.err.println("[BanManager] MySQL-Error: " + ex.getMessage());
@@ -116,7 +132,7 @@ public class BanManager extends JavaPlugin implements Listener, PluginMessageLis
                 System.err.println("[BanManager] Error while performing a query. (NullPointerException)");
             }
         }
-        System.out.print("Not creating");
+        getLogger().info("Found PlayerBans table.");
     }
 
     public void onDisable() {
@@ -140,7 +156,7 @@ public class BanManager extends JavaPlugin implements Listener, PluginMessageLis
             BanApi.unban(status.getVictim(), con);
             return -1L;
         }
-        String[] messages = { 
+        String[] messages = {
                 "You were banned by " + status.getBanner(), status.getReason(), "Buy an unban at " + ChatColor.RED +
                 "EyeOfEnder.com" + ChatColor.RESET, (status.isPermBanned() ? "Perm banned" : "Banned") + (status.getBanTime() == 0L ?
                         " indefinitely" : new StringBuilder(" for ").append(status.getBanTimeString()).toString())
@@ -206,14 +222,13 @@ public class BanManager extends JavaPlugin implements Listener, PluginMessageLis
 
     @EventHandler
     public void playerLogin(final AsyncPlayerPreLoginEvent event) {
+        System.out.println("0");
         if (BanApi.login == null) {
             return;
         }
         Connection con = BanApi.login;
-        if (con == null)
-            return;
-        if (isBungee(event.getAddress())) {
-            Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+        if (BanManager.main.isBungee(event.getAddress())) {
+            Bukkit.getScheduler().scheduleSyncDelayedTask(BanManager.main, new Runnable() {
                 public void run() {
                     Player player = Bukkit.getPlayerExact(event.getName());
                     if (player != null) {
@@ -229,9 +244,10 @@ public class BanManager extends JavaPlugin implements Listener, PluginMessageLis
             }
             , 40L);
         }
-        if (this.protectedNames.contains(event.getName())) {
+        if (BanManager.main.protectedNames.contains(event.getName())) {
             event.allow();
         } else {
+            System.out.println("1");
             String banMessage = BanApi.processLogin(event.getName(), event.getAddress().getHostAddress(), con);
             if (banMessage != null)
                 event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, banMessage);

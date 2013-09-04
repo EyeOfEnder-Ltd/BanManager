@@ -189,8 +189,7 @@ public class BanApi
         }
         if ((status.getBanTime() != 0L) && (status.getBanTime() < System.currentTimeMillis() / 1000L)) {
           unban(status.getVictim(), con);
-        } else if (status.isBanned())
-        {
+        } else if (status.isBanned()) {
           String[] messages = { 
             "You were banned by " + status.getBanner(), 
             status.getReason(), 
