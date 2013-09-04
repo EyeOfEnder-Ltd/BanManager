@@ -3,7 +3,6 @@ package com.entrocorp.linearlogic.eoebans;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -22,10 +21,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class BanManager extends JavaPlugin implements Listener {
@@ -34,9 +31,8 @@ public class BanManager extends JavaPlugin implements Listener {
     public String SQL_DATA;
     public String SQL_HOST;
     List<String> protectedNames = new ArrayList<String>();
-    int current = 0;
 
-    int sched = 0;
+    private int taskID;
     public static BanManager main;
     ConcurrentLinkedQueue<String> perms = new ConcurrentLinkedQueue<String>();
 
@@ -47,16 +43,15 @@ public class BanManager extends JavaPlugin implements Listener {
         SQL_PASS = getConfig().getString("sql.pass");
         SQL_DATA = getConfig().getString("sql.data");
         SQL_HOST = getConfig().getString("sql.host");
-        PluginManager manager = getServer().getPluginManager();
-        manager.registerEvents(this, this);
-        manager.registerEvents(new PlayerListener(this), this);
+        getServer().getPluginManager().registerEvents(this, this);
+        getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
         BanApi.admin = SQLconnect();
         BanApi.login = SQLconnect();
         if (BanApi.admin != null && BanApi.login != null)
             getLogger().info("Successfully connected to SQL backend.");
-        protectedNames();
+        loadProtectedNames();
         checkTableExists(BanApi.admin);
-        sched = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
+        taskID = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
             public void run() {
                 for (Player p : Bukkit.getOnlinePlayers())
                     if (p.hasPermission("chat.bypass"))
@@ -64,14 +59,14 @@ public class BanManager extends JavaPlugin implements Listener {
                     else
                         BanManager.main.perms.remove(p.getName());
             }
-        }
-        , 0L, 120L);
+        }, 0L, 120L);
         getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
         getServer().getMessenger().registerIncomingPluginChannel(this, "BungeeCord", new BungeeListener(this));
     }
 
-    public boolean isBungee(InetAddress address) {
-        return (address.getHostAddress().equals(Bukkit.getIp())) || (address.getHostAddress().equalsIgnoreCase("209.188.4.82"));
+    public void onDisable() {
+        SQLdisconnect();
+        Bukkit.getScheduler().cancelTask(taskID);
     }
 
     @EventHandler
@@ -92,10 +87,7 @@ public class BanManager extends JavaPlugin implements Listener {
         try {
             b.close();
             out.close();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        } catch (IOException e) { }
     }
 
     @EventHandler
@@ -135,120 +127,13 @@ public class BanManager extends JavaPlugin implements Listener {
         getLogger().info("Found PlayerBans table.");
     }
 
-    public void onDisable() {
-        SQLdisconnect();
-        Bukkit.getScheduler().cancelTask(this.sched);
-    }
-
-    public void protectedNames() {
+    public void loadProtectedNames() {
         this.protectedNames.add("enayet123");
         this.protectedNames.add("shazz96");
         this.protectedNames.add("c4d34");
         this.protectedNames.add("TheArcadix");
         this.protectedNames.add("DemandedLogic");
         this.protectedNames.add("LinearLogic");
-    }
-
-    long checkBanned(Connection con, AsyncPlayerPreLoginEvent event, BanState status) {
-        if ((!status.isBanned()) && (!status.isPermBanned()))
-            return -1L;
-        if ((status.getBanTime() != 0L) && (status.getBanTime() < System.currentTimeMillis() / 1000L)) {
-            BanApi.unban(status.getVictim(), con);
-            return -1L;
-        }
-        String[] messages = {
-                "You were banned by " + status.getBanner(), status.getReason(), "Buy an unban at " + ChatColor.RED +
-                "EyeOfEnder.com" + ChatColor.RESET, (status.isPermBanned() ? "Perm banned" : "Banned") + (status.getBanTime() == 0L ?
-                        " indefinitely" : new StringBuilder(" for ").append(status.getBanTimeString()).toString())
-        };
-        event.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_BANNED);
-        event.setKickMessage(StringUtils.join(messages, "\n"));
-        return status.getBanTime();
-    }
-
-    public void oldPlayerLogin(final AsyncPlayerPreLoginEvent event) {
-        Connection con = SQLconnect();
-        if (con == null)
-            return;
-        long id = -1L;
-        BanState status = BanApi.banInfo(event.getName(), con);
-        if (status == null)
-            BanApi.addPlayer(event.getName(), con);
-        else
-            id = checkBanned(con, event, status);
-        if (!isBungee(event.getAddress())) {
-            BanApi.updateLogin(event.getName(), event.getAddress().getHostAddress());
-            status = BanApi.banInfo(event.getAddress().getHostAddress(), con);
-            if (status != null)
-                BanApi.updateLogin(event.getAddress().getHostAddress(), event.getName());
-        } else {
-            Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
-                public void run() {
-                    Player player = Bukkit.getPlayerExact(event.getName());
-                    if (player != null) {
-                        ByteArrayOutputStream b = new ByteArrayOutputStream();
-                        DataOutputStream out = new DataOutputStream(b);
-                        try {
-                            out.writeUTF("IP");
-                        } catch (IOException localIOException) {
-                        }
-                        player.sendPluginMessage(BanManager.main, "BungeeCord", b.toByteArray());
-                    }
-                }
-            }
-            , 40L);
-        }
-        if (this.protectedNames.contains(event.getName()))
-            event.allow();
-        if (id == 0L) {
-            this.current -= 1;
-            try {
-                con.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            return;
-        }
-        if ((status != null) && (status.getBanTime() > id))
-            checkBanned(con, event, status);
-        if (this.protectedNames.contains(event.getName()))
-            event.allow();
-        try {
-            con.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void playerLogin(final AsyncPlayerPreLoginEvent event) {
-        if (BanApi.login == null) {
-            return;
-        }
-        Connection con = BanApi.login;
-        if (BanManager.main.isBungee(event.getAddress())) {
-            Bukkit.getScheduler().scheduleSyncDelayedTask(BanManager.main, new Runnable() {
-                public void run() {
-                    Player player = Bukkit.getPlayerExact(event.getName());
-                    if (player != null) {
-                        ByteArrayOutputStream b = new ByteArrayOutputStream();
-                        DataOutputStream out = new DataOutputStream(b);
-                        try {
-                            out.writeUTF("IP");
-                        } catch (IOException localIOException) {
-                        }
-                        player.sendPluginMessage(BanManager.main, "BungeeCord", b.toByteArray());
-                    }
-                }
-            }
-            , 40L);
-        }
-        if (BanManager.main.protectedNames.contains(event.getName())) {
-            event.allow();
-        } else {
-            String banMessage = BanApi.processLogin(event.getName(), event.getAddress().getHostAddress(), con);
-            if (banMessage != null)
-                event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, banMessage);
-        }
     }
 
     public void SQLdisconnect() {
@@ -371,44 +256,6 @@ public class BanManager extends JavaPlugin implements Listener {
                 sender.sendMessage(ChatColor.RED + "You do not have permission to use this command!");
                 return true;
             }
-        } else if (cmd.getName().equalsIgnoreCase("banip")) {
-            if (sender.hasPermission("banmanager.ban")) {
-                if (args.length > 0) {
-                    BanState state = BanApi.banInfo(args[0]);
-                    if (state == null) {
-                        BanApi.addPlayer(args[0], BanApi.admin);
-                        state = BanApi.banInfo(args[0]);
-                    }
-                    if (((state.isPermBanned()) || (state.isBanned())) && ((state.getBanTime() == 0L) ||
-                            (state.getBanTime() - System.currentTimeMillis() / 1000L * 2L > 0L)) && (!sender.isOp())) {
-                        sender.sendMessage(ChatColor.LIGHT_PURPLE + "You do not have the power to modify this ban");
-                        return true;
-                    }
-                    if ((state.isBanned()) || (state.isPermBanned()))
-                        BanApi.sendState(state, sender);
-                    BanApi.ban(StringUtils.join(args, " "), sender, false);
-                } else {
-                    sender.sendMessage(ChatColor.RED + "You need to define a IP!");
-                }
-                return true;
-            }
-        } else if (cmd.getName().equalsIgnoreCase("permbanip")) {
-            if (sender.isOp()) {
-                if (args.length > 0) {
-                    BanState state = BanApi.banInfo(args[0]);
-                    if (state == null) {
-                        BanApi.addPlayer(args[0], BanApi.admin);
-                        state = BanApi.banInfo(args[0]);
-                    }
-                    if ((state.isBanned()) || (state.isPermBanned()))
-                        BanApi.sendState(state, sender);
-                    BanApi.ban(StringUtils.join(args, " "), sender, true);
-                } else {
-                    sender.sendMessage(ChatColor.RED + "You need to define a IP!");
-                }
-                return true;
-            }
-            return true;
         }
         return true;
     }
