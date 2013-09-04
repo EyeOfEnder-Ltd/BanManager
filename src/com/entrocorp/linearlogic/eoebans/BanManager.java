@@ -84,7 +84,11 @@ public class BanManager extends JavaPlugin implements Listener {
         try {
             out.writeUTF("IP");
         } catch (IOException localIOException) { }
-        p.sendPluginMessage(main, "BungeeCord", b.toByteArray());
+        getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+            public void run() {
+                p.sendPluginMessage(main, "BungeeCord", b.toByteArray());
+            }
+        }, 20L);
         try {
             b.close();
             out.close();
