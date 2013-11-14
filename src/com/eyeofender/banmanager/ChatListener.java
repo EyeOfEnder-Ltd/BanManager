@@ -1,4 +1,4 @@
-package com.entrocorp.linearlogic.eoebans;
+package com.eyeofender.banmanager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,13 +18,13 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-public class PlayerListener implements Listener {
+public class ChatListener implements Listener {
     BanManager main;
     List<Pattern> filterPattern = new LinkedList<Pattern>();
     Map<String, Messages> messages = new HashMap<String, Messages>();
     Map<String, Long> muted = new HashMap<String, Long>();
 
-    public PlayerListener(BanManager main) {
+    public ChatListener(BanManager main) {
         this.filterPattern = new ArrayList<Pattern>();
         this.filterPattern.add(Pattern.compile("([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])"));
         this.filterPattern.add(Pattern.compile("(http://)?(www)?\\S{2,}((\\.com)|(\\.net)|(\\.org)|(\\.co\\.uk)|(\\.tk)|(\\.info)|(\\.es)|(\\.de)|(\\.arpa)|(\\.edu)|(\\.firm)|(\\.int)|(\\.mil)|(\\.mobi)|(\\.nato)|(\\.to)|(\\.fr)|(\\.ms)|(\\.vu)|(\\.eu)|(\\.nl)|(\\.ly))"));
@@ -55,8 +55,8 @@ public class PlayerListener implements Listener {
         if ((this.muted.containsKey(p.getName())) && (((Long)this.muted.get(p.getName())).longValue() < System.currentTimeMillis() / 1000L)) {
             Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(this.main, new Runnable() {
                 public void run() {
-                    p.sendMessage(ChatColor.RED + "You were muted. Your mute will expire in " + PlayerListener.this.getTime(System.currentTimeMillis() /
-                            1000L - ((Long) PlayerListener.this.muted.get(p.getName())).longValue()));
+                    p.sendMessage(ChatColor.RED + "You were muted. Your mute will expire in " + ChatListener.this.getTime(System.currentTimeMillis() /
+                            1000L - ((Long) ChatListener.this.muted.get(p.getName())).longValue()));
                 }
             });
             return true;

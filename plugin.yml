@@ -1,15 +1,26 @@
 name: BanManager
-main: com.entrocorp.linearlogic.eoebans.BanManager
-authors: [LinearLogic, libraryaddict]
-version: 1.2
+main: com.eyeofender.banmanager.BanManager
+author: LimeByte
+version: 1.3.2
+database: true
 commands:
     ban:
         description: Bans (or updates the pre-existing ban of) a player for a specified amount of time
-    unban:
+        usage: /<command> <player> <time> <reason>
+        permission: banmanager.ban
+    pardon:
         description: Unbans a player
+        usage: /<command> <player>
+        permission: banmanager.ban
+        aliases: unban
     baninfo:
         description: Retrieves ban details for a player
+        usage: /<command> <player>
+        permission: banmanager.info
 permissions:
+    banmanager.info:
+        description: Permission to view ban information
+        default: true
     banmanager.ban:
         description: Permission to run all ban commands that do not require explicit op access
         default: op
