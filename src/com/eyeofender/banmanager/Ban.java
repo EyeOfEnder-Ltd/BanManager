@@ -1,6 +1,6 @@
 package com.eyeofender.banmanager;
 
-import java.sql.Date;
+import java.sql.Timestamp;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -28,7 +28,7 @@ public class Ban {
     private String reason;
 
     @Column
-    private Date expiry;
+    private Timestamp expiry;
 
     public String getName() {
         return name;
@@ -62,11 +62,11 @@ public class Ban {
         this.reason = reason;
     }
 
-    public Date getExpiry() {
+    public Timestamp getExpiry() {
         return expiry;
     }
 
-    public void setExpiry(Date expiry) {
+    public void setExpiry(Timestamp expiry) {
         this.expiry = expiry;
     }
 

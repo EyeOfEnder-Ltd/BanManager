@@ -1,7 +1,7 @@
 package com.eyeofender.banmanager;
 
-import java.sql.Date;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 
