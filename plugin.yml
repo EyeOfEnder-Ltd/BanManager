@@ -17,10 +17,17 @@ commands:
         description: Retrieves ban details for a player
         usage: /<command> <player>
         permission: banmanager.info
+    banlist:
+        description: Lists the banned players.
+        usage: /<command>
+        permission: banmanager.ban
 permissions:
     banmanager.info:
         description: Permission to view ban information
         default: true
+    banmanager.list:
+        description: Permission to list banned players
+        default: op
     banmanager.ban:
         description: Permission to run all ban commands that do not require explicit op access
         default: op

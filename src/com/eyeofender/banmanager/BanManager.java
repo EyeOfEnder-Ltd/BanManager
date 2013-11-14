@@ -2,7 +2,6 @@ package com.eyeofender.banmanager;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -55,10 +54,6 @@ public class BanManager extends JavaPlugin {
         if (cmd.getName().equalsIgnoreCase("baninfo")) {
             if (args.length > 0) {
                 BanApi.sendBanInfo(sender, args[0]);
-                if (args[0].equalsIgnoreCase("time")) {
-                    sender.sendMessage(BanApi.formatTimestamp(new Date()));
-                    sender.sendMessage(BanApi.formatTimestamp(new Timestamp(System.currentTimeMillis())));
-                }
             } else {
                 sender.sendMessage(ChatColor.RED + "Please specify a player name!");
                 return false;
@@ -90,6 +85,8 @@ public class BanManager extends JavaPlugin {
                 sender.sendMessage(ChatColor.RED + "Please specify a player name!");
                 return false;
             }
+        } else if (cmd.getName().equalsIgnoreCase("banlist")) {
+            BanApi.sendBanList(sender);
         }
         return true;
     }

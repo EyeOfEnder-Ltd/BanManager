@@ -124,4 +124,33 @@ public class BanApi {
         ban.setLastIp(ip);
         databaseConnecter.updateBan(ban);
     }
+
+    public static void refreshAll() {
+        Date date = new Date(new java.util.Date().getTime());
+        for (Ban ban : databaseConnecter.getBans()) {
+            Date expiry = ban.getExpiry();
+            if (expiry == null || expiry.after(date)) unban(ban.getName());
+        }
+    }
+
+    public static void sendBanList(CommandSender sender) {
+        refreshAll();
+
+        StringBuilder message = new StringBuilder();
+        Ban[] banlist = databaseConnecter.getBans().toArray(new Ban[0]);
+
+        for (int x = 0; x < banlist.length; x++) {
+            if (x != 0) {
+                if (x == banlist.length - 1) {
+                    message.append(" and ");
+                } else {
+                    message.append(", ");
+                }
+            }
+            message.append(banlist[x].getName());
+        }
+
+        sender.sendMessage(ChatColor.DARK_PURPLE + "There are " + banlist.length + " total banned players:");
+        sender.sendMessage(ChatColor.LIGHT_PURPLE + message.toString());
+    }
 }

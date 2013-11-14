@@ -37,6 +37,10 @@ public class DatabaseConnecter {
         if (ban != null) plugin.getDatabase().delete(ban);
     }
 
+    public List<Ban> getBans() {
+        return plugin.getDatabase().find(Ban.class).findList();
+    }
+
     public boolean isBanned(String name, boolean refresh) {
         Ban ban = getBan(name);
         if (ban == null) return false;
