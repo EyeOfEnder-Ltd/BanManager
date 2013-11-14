@@ -1,10 +1,5 @@
 package com.eyeofender.banmanager;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -25,30 +20,15 @@ public class ConnectionListener implements Listener {
     public void onPlayerLogin(PlayerLoginEvent event) {
         String name = event.getPlayer().getName();
         if (BanApi.isBanned(name)) {
+            BanApi.updateIP(name, event.getAddress().getHostAddress());
             event.disallow(Result.KICK_BANNED, BanApi.getBanKickMessage(name));
         }
     }
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
-        final Player p = event.getPlayer();
+        Player p = event.getPlayer();
         if (p.hasPermission("chat.bypass")) plugin.perms.add(p.getName());
-        final ByteArrayOutputStream b = new ByteArrayOutputStream();
-        DataOutputStream out = new DataOutputStream(b);
-        try {
-            out.writeUTF("IP");
-        } catch (IOException localIOException) {
-        }
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-            public void run() {
-                p.sendPluginMessage(plugin, "BungeeCord", b.toByteArray());
-            }
-        }, 5L);
-        try {
-            b.close();
-            out.close();
-        } catch (IOException e) {
-        }
     }
 
     @EventHandler

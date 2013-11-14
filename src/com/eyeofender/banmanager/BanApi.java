@@ -64,11 +64,10 @@ public class BanApi {
         Ban ban = databaseConnecter.getBan(name);
         if (ban == null) return "";
 
-        String message = "You were banned by " + ban.getBanner();
-        message += " for " + ban.getReason();
-        message += "You are banned until:\n";
-        message += formatDate(ban.getExpiry());
-        message += "\nBuy an unban at " + ChatColor.AQUA + "EyeOfEnder.com";
+        String message = "Banned by " + ban.getBanner() + " for " + ban.getReason() + ".\n\n";
+        message += "Either wait until:\n";
+        message += ChatColor.BLUE + formatDate(ban.getExpiry()) + "\n" + ChatColor.RESET;
+        message += "Or buy an unban at " + ChatColor.AQUA + "EyeOfEnder.com";
         return message;
     }
 
