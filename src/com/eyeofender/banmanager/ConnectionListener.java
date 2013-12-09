@@ -20,7 +20,6 @@ public class ConnectionListener implements Listener {
     public void onPlayerLogin(PlayerLoginEvent event) {
         String name = event.getPlayer().getName();
         if (BanApi.isBanned(name)) {
-            BanApi.updateIP(name, event.getAddress().getHostAddress());
             event.disallow(Result.KICK_BANNED, BanApi.getBanKickMessage(name));
         }
     }

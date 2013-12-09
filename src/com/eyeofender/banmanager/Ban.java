@@ -1,6 +1,6 @@
 package com.eyeofender.banmanager;
 
-import java.sql.Timestamp;
+import java.sql.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -11,24 +11,24 @@ import com.avaje.ebean.validation.Length;
 import com.avaje.ebean.validation.NotNull;
 
 @Entity
-@Table(name = "global_bans")
+@Table(name = "GlobalBans")
 public class Ban {
 
     @Id
     @Length(max = 16)
     private String name;
 
-    @Column
-    private String lastIp;
-
     @NotNull
-    private String banner;
+    private String byWhom;
 
     @NotNull
     private String reason;
 
+    @NotNull
+    private Date date;
+
     @Column
-    private Timestamp expiry;
+    private Date expiry;
 
     public String getName() {
         return name;
@@ -38,20 +38,12 @@ public class Ban {
         this.name = name;
     }
 
-    public String getLastIp() {
-        return lastIp;
+    public String getByWhom() {
+        return byWhom;
     }
 
-    public void setLastIp(String lastIp) {
-        this.lastIp = lastIp;
-    }
-
-    public String getBanner() {
-        return banner;
-    }
-
-    public void setBanner(String banner) {
-        this.banner = banner;
+    public void setByWhom(String byWhom) {
+        this.byWhom = byWhom;
     }
 
     public String getReason() {
@@ -62,11 +54,19 @@ public class Ban {
         this.reason = reason;
     }
 
-    public Timestamp getExpiry() {
+    public Date getDate() {
+        return date;
+    }
+
+    public void setDate(Date date) {
+        this.date = date;
+    }
+
+    public Date getExpiry() {
         return expiry;
     }
 
-    public void setExpiry(Timestamp expiry) {
+    public void setExpiry(Date expiry) {
         this.expiry = expiry;
     }
 

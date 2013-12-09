@@ -1,9 +1,7 @@
 package com.eyeofender.banmanager;
 
-import java.sql.Timestamp;
+import java.sql.Date;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.concurrent.TimeUnit;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -18,14 +16,15 @@ public class BanApi {
         BanApi.databaseConnecter = new DatabaseConnecter(plugin);
     }
 
-    public static void ban(String name, String banner, String reason, Timestamp expiry) {
+    public static void ban(String name, String byWhom, String reason, Date date, Date expiry) {
         Ban ban = databaseConnecter.getBan(name);
         boolean existing = ban != null;
 
         if (!existing) ban = new Ban();
         ban.setName(name);
-        ban.setBanner(banner);
+        ban.setByWhom(byWhom);
         ban.setReason(reason);
+        ban.setDate(date);
         ban.setExpiry(expiry);
 
         if (existing) {
@@ -55,9 +54,9 @@ public class BanApi {
         }
 
         sender.sendMessage(ChatColor.DARK_PURPLE + "Player: " + ChatColor.LIGHT_PURPLE + ban.getName());
-        sender.sendMessage(ChatColor.DARK_PURPLE + "Last login: " + ChatColor.LIGHT_PURPLE + ban.getLastIp());
-        sender.sendMessage(ChatColor.DARK_PURPLE + "Banned by: " + ChatColor.LIGHT_PURPLE + ban.getBanner());
+        sender.sendMessage(ChatColor.DARK_PURPLE + "Banned by: " + ChatColor.LIGHT_PURPLE + ban.getByWhom());
         sender.sendMessage(ChatColor.DARK_PURPLE + "Reason: " + ChatColor.LIGHT_PURPLE + ban.getReason());
+        sender.sendMessage(ChatColor.DARK_PURPLE + "Banned on: " + ChatColor.LIGHT_PURPLE + formatTimestamp(ban.getDate()));
         sender.sendMessage(ChatColor.DARK_PURPLE + "Banned until: " + ChatColor.LIGHT_PURPLE + formatTimestamp(ban.getExpiry()));
     }
 
@@ -65,54 +64,79 @@ public class BanApi {
         Ban ban = databaseConnecter.getBan(name);
         if (ban == null) return "";
 
-        String message = "Banned by " + ban.getBanner() + " for " + ban.getReason() + ".\n\n";
+        String message = "Banned by " + ban.getByWhom() + " for " + ban.getReason() + ".\n\n";
         message += "Either wait until:\n";
         message += ChatColor.BLUE + formatTimestamp(ban.getExpiry()) + "\n" + ChatColor.WHITE;
         message += "Or buy an unban at " + ChatColor.AQUA + "EyeOfEnder.com";
         return message;
     }
 
-    public static void updateIP(String name, String ip) {
-        Ban ban = databaseConnecter.getBan(name);
-        if (ban == null) return;
+    public static Date getRelative(Date date, String addition) {
+        addition = addition.toLowerCase();
 
-        ban.setLastIp(ip);
-    }
+        if (addition.contains("forever")) return null;
 
-    public static Timestamp getRelative(String time) throws IllegalArgumentException {
-        time = time.toLowerCase();
+        int m = 0;
+        int w = 0;
+        int d = 0;
+        int h = 0;
+        int min = 0;
 
-        if (time.contains("forever")) return null;
-
-        int multiple = 1;
-        long milliseconds;
-
-        if (time.endsWith("d")) {
-            multiple = 1;
-        } else if (time.endsWith("w")) {
-            multiple = 7;
-        } else if (time.endsWith("m")) {
-            multiple = 30;
-        } else {
-            throw new IllegalArgumentException("Invalid time format.");
+        String[] parts = addition.split(",");
+        for (String part : parts) {
+            String[] spl = part.split(":");
+            if (addition.contains("m:")) {
+                m = Integer.parseInt(spl[1]);
+            } else if (addition.contains("w:")) {
+                w = Integer.parseInt(spl[1]);
+            } else if (addition.contains("d:")) {
+                d = Integer.parseInt(spl[1]);
+            } else if (addition.contains("h:")) {
+                h = Integer.parseInt(spl[1]);
+            } else if (addition.contains("min:")) {
+                min = Integer.parseInt(spl[1]);
+            }
         }
 
-        time = time.replaceAll("[^\\d.]", "");
-        try {
-            int value = Integer.parseInt(time);
-            milliseconds = TimeUnit.MILLISECONDS.convert(value * multiple, TimeUnit.DAYS);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid time format.");
+        String[] spl = addition.split(":");
+        if (addition.contains("m:")) {
+            m = Integer.parseInt(spl[1]);
+        } else if (addition.contains("w:")) {
+            w = Integer.parseInt(spl[1]);
+        } else if (addition.contains("d:")) {
+            d = Integer.parseInt(spl[1]);
+        } else if (addition.contains("h:")) {
+            h = Integer.parseInt(spl[1]);
+        } else if (addition.contains("min:")) {
+            min = Integer.parseInt(spl[1]);
         }
 
-        return new Timestamp(System.currentTimeMillis() + milliseconds);
+        long time = 0;
+        if (m > 0) {
+            time = m * 2419200;
+        }
+        if (w > 0) {
+            time = time + (w * 604800);
+        }
+        if (d > 0) {
+            time = time + (d * 86400);
+        }
+        if (h > 0) {
+            time = time + (h * 3600);
+        }
+        if (min > 0) {
+            time = time + (min * 60);
+        }
+
+        long milliseconds = time * 1000;
+        return new Date(date.getTime() + milliseconds);
     }
 
     public static String formatTimestamp(Date date) {
         String formattedDate = "The end of time itself";
         if (date != null) {
             SimpleDateFormat df = new SimpleDateFormat("dd MMM yyyy h:mm:ss a");
-            formattedDate = df.format(date);
+            formattedDate = df.format(new Date(date.getTime()));
         }
 
         return formattedDate;
@@ -121,7 +145,6 @@ public class BanApi {
     public static void updateLogin(String loginName, String ip) {
         Ban ban = databaseConnecter.getBan(loginName);
         if (ban == null) return;
-        ban.setLastIp(ip);
         databaseConnecter.updateBan(ban);
     }
 

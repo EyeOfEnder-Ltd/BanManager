@@ -1,6 +1,6 @@
 package com.eyeofender.banmanager;
 
-import java.sql.Timestamp;
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -24,7 +24,6 @@ public class BanManager extends JavaPlugin {
         BanApi.init(this);
 
         getServer().getPluginManager().registerEvents(new ConnectionListener(this), this);
-        getServer().getPluginManager().registerEvents(new ChatListener(this), this);
         loadProtectedNames();
         taskID = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
             public void run() {
@@ -35,14 +34,13 @@ public class BanManager extends JavaPlugin {
             }
         }, 0L, 120L);
         getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
-        getServer().getMessenger().registerIncomingPluginChannel(this, "BungeeCord", new BungeeListener(this));
     }
 
     public void onDisable() {
         Bukkit.getScheduler().cancelTask(taskID);
     }
 
-    public void loadProtectedNames() {
+    private void loadProtectedNames() {
         this.protectedNames.add("enayet123");
         this.protectedNames.add("shazz96");
         this.protectedNames.add("c4d34");
@@ -60,9 +58,15 @@ public class BanManager extends JavaPlugin {
             }
         } else if (cmd.getName().equalsIgnoreCase("ban")) {
             if (args.length > 2) {
+                if (protectedNames.contains(args[0].toLowerCase())) {
+                    sender.sendMessage(ChatColor.RED + args[0] + " is unbannable!");
+                    return true;
+                }
+
                 try {
-                    Timestamp expiry = BanApi.getRelative(args[1]);
-                    BanApi.ban(args[0], sender.getName(), createString(args, 2), expiry);
+                    Date date = new Date(new java.util.Date().getTime());
+                    Date expiry = BanApi.getRelative(date, args[1]);
+                    BanApi.ban(args[0], sender.getName(), createString(args, 2), date, expiry);
                     sender.sendMessage(ChatColor.LIGHT_PURPLE + "Banned " + args[0] + " until " + BanApi.formatTimestamp(expiry));
                 } catch (IllegalArgumentException e) {
                     sender.sendMessage(ChatColor.RED + e.getMessage());
